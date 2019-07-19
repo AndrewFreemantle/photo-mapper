@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # This Ruby script generates two Keyhole Markup Language files:
 #  1. points.kml	- a point for every photo with GPS coords
 #  2. route.kml		- a single line that joins every photo with GPS coords
@@ -15,6 +16,7 @@
 
 
 require 'exifr'
+require 'exifr/jpeg'
 require 'date'
 
 
@@ -39,14 +41,13 @@ class Traverse
 				if File.directory?(File.join(path, f))
 					@t = Traverse.new(File.join(path, f), pointsFile, routeFile)
 				elsif File.file?(File.join(path, f))
-
 					# Is this an allowed file?
 					if ALLOWED_EXTENSIONS.include? File.extname(f)
 						# Does this file have Geo coords?
 						puts "Got allowed file #{File.join(path,f)}"
-
 						begin
-							@file = EXIFR::JPEG.new(File.join(path, f))
+							the_url = File.join(path, f)
+							@file = EXIFR::JPEG.new(the_url)
 							if @file.exif?()
 								# We have EXIF, but do we have sensible Lat & Long?
 								if @file.gps != nil
@@ -55,11 +56,11 @@ class Traverse
 										pointsFile.puts("<Placemark><name>#{f}</name><Point><coordinates>#{@file.gps.longitude},#{@file.gps.latitude},#{@file.gps.altitude}</coordinates></Point></Placemark>")
 										routeFile.puts("#{@file.gps.longitude},#{@file.gps.latitude},0 ")
 									else
-										#puts "No GPS in " + ARGV[0]
+										puts "No GPS in " + ARGV[0]
 									end
 								end
 							else
-								#puts "No EXIF in " + ARGV[0]
+								puts "No EXIF in " + ARGV[0]
 							end
 						rescue EOFError
 							# End Of File can happen for partially copied or uploaded photos
@@ -131,3 +132,4 @@ routeFile.puts("</coordinates>
 routeFile.flush()
 
 # Done  :o)
+puts "Done"
